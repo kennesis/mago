@@ -1,210 +1,294 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
+  Button,
   useColorScheme,
   View,
+  FlatList,
+  Dimensions
 } from 'react-native';
+import { addDays } from 'date-fns';
 
-const 달력 = '마고력';
-let 한기 = 4;
-let 육십갑자 = '계묘';
-let 단기 = 4356;
-let 서기 = 2023;
-let 개천 = 5920;
+import 한달을그리다 from './src/Month';
 
-function 한달을세다() {
+const screenWidth = Dimensions.get('screen').width;
+
+const 사 = 13;
+const 기 = 4;
+const 요 = 7;
+
+const 서기 = new Date().getFullYear();
+const 단기 = 서기 + 2333;
+let 양력 = new Date();
+// 양력.setFullYear(서기 - 72);
+양력.setFullYear(서기 - 3);
+양력.setMonth(10);
+양력.setDate(21);
+
+function 시작요일(하늘, 땅) {
+  let 요일 = 0;
+
+  for(let i = 1; i <= 하늘; i++) {
+    if(i % 4 === 1) {
+      요일 += 2;
+    }
+    else 요일 += 1;
+  }
+
+  if(하늘 % 4 === 1) {
+    if(땅 > 0) 요일 += 1;
+  } else {
+    요일 += 1;
+  }
+
+  return (요일 + 2) % 요;
+}
+
+function 초기화(오늘) {
+  let 모든날 = [];
+
+  // for(let 하늘 = 단기 - 71; 하늘 < 단기 + 15; 하늘++) {
+  for(let 하늘 = 단기 - 2; 하늘 < 단기 + 2; 하늘++) {
+    모든날.push(한해를세다(하늘, 오늘));
+  }
+
+  // console.log(모든날);
+
+  return 모든날;
+}
+
+function 한해를세다(하늘, 오늘) {
+  let 한해 = [];
+
+  for(let 땅 = 0; 땅 < 사; 땅++) {
+    한해.push(한달을세다(하늘, 땅, 오늘));
+  }
+
+  return 한해;
+}
+
+function 한달을세다(하늘, 땅, 오늘) {
   let 한달 = [];
-  for(let 하늘 = 0; 하늘 < 소력().기.수; 하늘++) {
+  let 판 = 0;
+  let 날 = 0;
+  let 시작 = false;  
 
+  if(하늘 % 4 === 1 && 땅 === 0) {
+    판 = 1;
+  }
+
+  let 추가열 = 시작요일(하늘, 땅) === 6 && 판 === 1 ? true : false;
+
+  for(let 해 = 0; 해 <= 4 + 추가열; 해++) {
     let 한주 = [];
 
-    for(let 땅 = 1; 땅 <= 소력().요.수; 땅++) {
+    for(let 달 = 0; 달 < 요; 달++) {
+      if(해 === 0 && !시작) {
+        if(달 === 시작요일(하늘, 땅)) {
+          시작 = true;
+        } else {
+          한주.push(하루를세다(하늘, 땅, 해, 달, 날, 판, 오늘));
+          continue;
+        }
+      }
 
-      let 하루 = (하늘 * 소력().요.수) + 땅;
+      한주.push(하루를세다(하늘, 땅, 해, 달, 날, 판, 오늘));
+      날++;
 
-      한주.push(하루);
     }
 
     한달.push(한주);
-
-  }
-  return 한달;
-}
-
-function 소력() {
-  const 사 = {
-    이름: '년',
-    호칭: '해',
-    수: 13
-  };
-  const 기 = {
-    이름: '월',
-    호칭: '달',
-    수: 4
-  };
-  const 요 = {
-    이름: '일',
-    호칭: '별',
-    수: 7,
-    요일: [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6
-    ]
-  };
-  const 복 = {
-    호칭: '요의 끝'
   }
 
   return {
-    사,
-    기,
-    요,
-    복
+    한달,
+    날짜: {
+      해: 하늘,
+      달: 땅
+    }
   };
 }
 
-function 한달을그리다(한달) {
-  // console.log(한달);
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: 'transparent',
-        flexDirection: 'column'
-      }}
-    >
-      {한달.map((한주) => 한주를그리다(한주))}
-    </View>    
-  );
-}
-
-function 한주를그리다(한주) {
-  // console.log(한주);
-  return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        {한주.map((하루) => 하루를그리다(하루))}
-    </View>
-  );
-}
-
-function 하루를그리다(하루) {
-  return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: 'black',
-        height: 100,
-      }}>
-      <Text style={{ color: 'black' }} key={하루}>{하루}</Text>
-    </View>
-  );
-}
-
-function 요일(날짜) {
-  let 요일 = '';
-  switch (날짜) {
-    case 0:
-      요일 = '토';
-      break;
-    case 1:
-      요일 = '일';
-      break;
-    case 2:
-      요일 = '월';
-      break;
-    case 3:
-      요일 = '화';
-      break;
-    case 4:
-      요일 = '수';
-      break;
-    case 5:
-      요일 = '목';
-      break;
-    case 6:
-      요일 = '금';
-      break;
+function 하루를세다(하늘, 땅, 해, 달, 날, 판, 오늘) {
+  const 하루 = {};
   
-    default:
-      break;
+  if(땅 === 0 && 해 === 0 && 달 === 시작요일(하늘, 땅) && 날 === 0) {
+    하루.설 = true;
+    양력 = addDays(양력, 1);
   }
-  return 요일;
-}
 
-// 오늘을 어떻게 알 것인가?
+  if(날 <= 0 || 날 > (기 * 요) + 판) {
+    날 = null;
+  } else {
+    양력 = addDays(양력, 1);
+  }
+
+  if(양력.getFullYear() === 오늘.getFullYear() && 양력.getMonth() === 오늘.getMonth() && 양력.getDate() === 오늘.getDate()) {
+    하루.선택날짜 = true;
+  }
+
+  하루.표시날짜 = 날;
+  하루.양력날짜 = 하루.설 || 날 > 0 ? 양력 : null;
+
+  return 하루;
+}
 
 function App() {
+
+  console.log(new Date());
+  
+  const [ data, setData ] = useState(() => {
+    return 초기화(new Date()).flat();
+  });
+
+  const findToday = useCallback(e => {
+    const 오늘 = new Date();
+    const 년 = 오늘.getFullYear();
+    const 월 = 오늘.getMonth();
+    const 일 = 오늘.getDate();
+    const today = data?.find(element => {
+        const today2 = element.한달.flat().find(item => {
+          if(item.양력날짜) {
+            return item.양력날짜.getFullYear() === 년 && item.양력날짜.getMonth() === 월 && item.양력날짜.getDate() === 일;
+          }
+          else return null;
+        })
+        return today2;
+      }
+    );
+    return today;
+  }, [data]);
+
+  const [ 해, 해설정 ] = useState(findToday().날짜.해);
+  const [ 달, 달설정 ] = useState(findToday().날짜.달);
+  const listRef = useRef();
+
   const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? 'black' : 'white',
+  const renderItem = ({ item, index }) => {
+    return 한달을그리다(item, index, isDarkMode);
   };
 
+  const onViewCallBack = useCallback((viewableItems)=> {
+    // console.log(viewableItems);
+    const item = viewableItems.changed[0].item;
+    해설정(item.날짜.해);
+    달설정(item.날짜.달);
+  }, [data]); // any dependencies that require the function to be "redeclared"
+
+  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 50 });
+
+  const getTodayIndex = useCallback(e => {
+    const 오늘 = new Date();
+    const 년 = 오늘.getFullYear();
+    const 월 = 오늘.getMonth();
+    const 일 = 오늘.getDate();
+    const index = data?.findIndex(element => {
+        const index2 = element.한달.flat().findIndex(item => {
+          if(item.양력날짜) {
+            // console.log(item.양력날짜);
+            return item.양력날짜.getFullYear() === 년 && item.양력날짜.getMonth() === 월 && item.양력날짜.getDate() === 일;
+          }
+          else return false;
+        })
+        return index2 >= 0;
+      }
+    );  
+    return index;
+  }, [data]);
+
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <SafeAreaView style={{
+      backgroundColor: isDarkMode ? 'black' : 'white',
+      flex: 1
+    }}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor={isDarkMode ? 'black' : 'white'}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
         <View
           style={{
             flex: 1,
             flexDirection: 'column',
-            backgroundColor: isDarkMode ? 'black' : 'white',
+            backgroundColor: isDarkMode ? 'black' : 'white'
           }}>
-            <Text style={{ alignSelf: 'center', color: 'blue' }}>
-              {달력}
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Button
+                title="메뉴"
+                onPress={() => console.log('메뉴 오픈')}
+              >
+
+              </Button>
+              <Text
+                style={{
+                  alignSelf: 'center',
+                  color: isDarkMode ? 'white' : 'black',
+                  fontSize: 18,
+                  fontWeight: '700'
+                }}>
+                {달 === 0 ? `${해}(${해 - 1})` : 해}년 {달 === 0 ? '정한달' : 달 + '월'}
+              </Text>
+              <Button
+                title={'오늘'}
+                onPress={() => {
+                  listRef.current.scrollToIndex({ animated: false, index: getTodayIndex() })
+                  // setCurrentDate(new Date());
+                }}>
+              </Button>
+            </View>
             <View
               style={{
-                flex: 1,
                 flexDirection: 'row',
                 justifyContent: 'space-around',
                 paddingVertical: 10
               }}>
-              { 소력().요.요일.map((날짜, 순서) => <Text key={순서}>{요일(날짜)}</Text>) }
+              { ['해', '달', '화성', '수성', '목성', '금성', '토성'].map((요일, 순서) => {
+                  let color;
+
+                  if(순서 === 0) color = 'rgba(255, 0, 0, 0.7)';
+                  else if(순서 === 6) color = 'cornflowerblue';
+                  else color = isDarkMode ? 'white' : 'black';
+
+                  return (
+                    <Text
+                      key={순서}
+                      style={{ flex: 1, textAlign: 'center', color }}
+                    >
+                      {요일}
+                    </Text>
+                  );
+                }
+              ) }
             </View>
 
-            { 한달을그리다(한달을세다()) }
+            <FlatList
+              style={{ flex: 1 }}
+              data={data}
+              renderItem={renderItem}
+              getItemLayout={(data, index) => ({
+                length: screenWidth,
+                offset: screenWidth * index,
+                index
+              })}
+              ref={listRef}
+              onViewableItemsChanged={onViewCallBack}
+              viewabilityConfig={viewConfigRef.current}
+              keyExtractor={item => `${item.날짜.해}${item.날짜.달}`}
+              removeClippedSubviews={true}
+              initialNumToRender={1}
+              initialScrollIndex={getTodayIndex()}
+              horizontal={true}
+              pagingEnabled={true}
+              showsHorizontalScrollIndicator={false}
+              windowSize={3}
+            />
 
         </View>
-      </ScrollView>
     </SafeAreaView>
   );
 }
-
-// const styles = StyleSheet.create({
-//   textColor: 'black',
-// });
 
 export default App;
